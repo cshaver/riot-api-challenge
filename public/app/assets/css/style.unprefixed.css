@@ -30,16 +30,16 @@ html {
 }
 
 body {
-  font: 300 13px/1.6 'Helvetica Neue', Helvetica, Arial;
+  font: 300 16px 'Helvetica Neue', Helvetica, Arial;
   background: #fff;
   color: #444;
+  margin: 0;
 }
 
 .logo {
-  margin: -100px 0 0 -84px;
-  position: absolute;
-  top: 50%;
-  left: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .nav ul {
