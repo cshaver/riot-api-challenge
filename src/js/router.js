@@ -32,6 +32,7 @@ io.on('connection', function(socket){
 
   socket.on('disconnect', function(){
     console.log(socket.user.nickname + ' left rooms ' + socket.rooms);
+    console.log(socket.rooms);
   });
 
   // join a room
@@ -41,6 +42,7 @@ io.on('connection', function(socket){
     socket.join(data.room.id);
 
     console.log(socket.user.nickname + ' joined room ' + data.room.id);
+    // io.to(data.room.id).emit('users update', io.sockets.clients(data.room.id));
   });
 });
 
@@ -134,7 +136,8 @@ app.get('/user/leave/:id', function(req, res){
 // route endpoints
 app.get('/match', function(req, res) {
   
-  var query = "SELECT * FROM matches WHERE json IS NOT NULL AND cleaned = 2 LIMIT 1;";
+  // shouldnt just do random since its kind slow but HEY its 10AM
+  var query = "SELECT * FROM matches WHERE json IS NOT NULL ORDER BY RANDOM() LIMIT 1;";
 
   var q = pgclient.query(query);
 

@@ -103,10 +103,10 @@ textarea {
   border-radius: 30px;
 }
 
-.bets {
+table {
   margin: 0 auto;
 }
-.bets .champion-image img {
+table .champion-image img {
   width: 60px;
   height: 60px;
 }
