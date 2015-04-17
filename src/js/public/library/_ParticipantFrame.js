@@ -9,7 +9,6 @@ Challenge.Collections = Challenge.Collections || {};
     Challenge.Models.ParticipantFrame = Backbone.Model.extend({
 
       initialize: function(){
-          
       },
 
       defaults: function(){

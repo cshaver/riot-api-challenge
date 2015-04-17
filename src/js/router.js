@@ -1,6 +1,7 @@
-var https   = require('https');
 var express = require('express');
-var app = express();
+var app     = express();
+var http    = require('http').Server(app);
+var io      = require('socket.io')(http);
 
 var bodyParser = require('body-parser');
 
@@ -11,16 +12,41 @@ app.use(express.static('public'));
 
 var config = {};
 
+var words = {
+  adjectives : ["Doran’s","Bilgewater","Rabadon’s","Nashor’s","Last","Righteous","Trinity","Wooglet’s","Talisman of","Will of the","Ruby","Luden’s","Infinity","The","Mejai’s","Archangel’s","Seraph’s","Greater","Forbidden","Boots of","Tear of the","Wicked","Fed","Siege","Super","Caster","Melee","Ranged","Outer","Inhibitor","Nexus","Excessive","Perma","Definitely Not","Enchanted Crystal","Super Mega","OP","AFK","Better Nerf"],
+  nouns      : ["Gromp","Krug","Scuttler","Sentinel","Raptor","Wolf","Brambleback","Dragon","Baron","Buff","Wraith","Vilemaw","Golem","Elixer","Ward","Poro","Boots","Shield","B. F. Sword","Smite","Heal","Ignite","Ghost","Teleport","Needlessly Large Rod","Soulstealer","Minion","Turret","Inhibitor","Nexus","Rito","Jungler","ADC","Smurf","Assist","Kill","Fountain","CC","Tibbers"]
+};
+
+var lolapi  = require('lolapi')(config.apiKey, config.region);
+
+lolapi.setRateLimit(10, 500);
+
 // start server listening
-var server = app.listen(3002, function () {
-
-  var host = server.address().address;
-  var port = server.address().port;
-
-  console.log('Example app listening at http://%s:%s', host, port);
-
+http.listen(3000, function(){
+  console.log('listening on *:3000');
 });
 
+// set up socket.io
+io.on('connection', function(socket){
+  socket.user = { id : '', nickname : '' };
+
+  socket.on('disconnect', function(){
+    console.log(socket.user.nickname + ' left rooms ' + socket.rooms);
+  });
+
+  // join a room
+  socket.on('join', function(data){
+    console.log(data);
+    socket.user = data.user;
+    socket.join(data.room.id);
+
+    console.log(socket.user.nickname + ' joined room ' + data.room.id);
+  });
+});
+
+
+// DATABASE stuff
+//
 // set up MySQL
 var mysql      = require('mysql');
 var mysqlConnection = mysql.createConnection({
@@ -30,6 +56,7 @@ var mysqlConnection = mysql.createConnection({
   database : 'riotpls'
 });
 
+// set up PostgreSQL
 var pg = require('pg');
 // "postgres://*USERNAME*:*PASSWORD*@*HOST*:*PORT/*DATABASE*"
 var connectionString = "postgres://" + config.postgres.user + ":" + config.postgres.password + "@" +
@@ -42,26 +69,70 @@ mysqlConnection.connect();
 
 // endpoints
 
-//   MIGRATE - 
-//      get a row from mysql database connection
-//      write the row to postgresql database
-// 
+// join existing room, return id and nickname
+app.get('/room/:id', function(req, res){
+  var roomParams = roomIdToParams(req.params.id);
 
-app.get('/migrate', function(req, res) {
-  // do stuff
+  if (roomParams.id){
+    var query = "SELECT * FROM rooms WHERE id = " + roomParams.id + ";";
+    console.log(query);
 
-  console.log('Hello!');
+    var q = pgclient.query(query, function(err, result){
+      if (err){
+        console.log(err);
+      }
+      else {
+        var id     = result.rows[0].id,
+            random = result.rows[0].random,
+            room   = getRoomId(id, random);
 
-  // get rows from mysql
-  getMysqlRows(function(){
-    res.send('done');
+        createUser(id, function(user){
+          res.send( { room : result.rows[0], user: user } );
+        });
+      }
+    });
+  }
+
+  
+});
+
+// create new room and new user
+app.get('/room', function(req, res){
+  console.log('new room');
+
+  var random = getRandomInt();
+
+  var query = "INSERT INTO rooms ( random ) VALUES ( " + random + " ) RETURNING *;";
+
+
+  var q = pgclient.query(query, function(err, result){
+    var id     = result.rows[0].id,
+        random = result.rows[0].random,
+        room   = getRoomId(id, random);
+
+    createUser(id, function(user){
+      res.send( { room : { id : room }, user : user });
+    });
   });
 
-  // insert them into psql
+});
+
+// remove user from any room
+app.get('/user/leave/:id', function(req, res){
+
+  var query = "UPDATE users SET room_id = NULL WHERE id = " + req.params.id + " RETURNING *;";
+
+  var q = pgclient.query(query, function(err, result){
+    if (err){
+      console.log(err);
+    }
+
+    res.send( result.rows );
+  });
 });
 
 // route endpoints
-app.get('/match', function (req, res) {
+app.get('/match', function(req, res) {
   
   var query = "SELECT * FROM matches WHERE json IS NOT NULL AND cleaned = 2 LIMIT 1;";
 
@@ -74,13 +145,59 @@ app.get('/match', function (req, res) {
   });
 
   q.on('end', function() {
-    console.log('/match');
-    res.send(results[0].json);
+    res.send(cleanJson(results[0].json));
   });
 
   q.on('error', function(error){
     console.log(error);
   });
+});
+
+// send join url to main page and let backbone router handle it
+app.get('/join/:id', function(req, res){
+  var options = {
+    root: __dirname + '/../../public/'
+  };
+
+  var fileName = 'index.html';
+
+  res.sendFile(fileName, options, function (err) {
+    if (err) {
+      console.log(err);
+      res.status(err.status).end();
+    }
+  });
+});
+
+// send join url to main page and let backbone router handle it
+app.get('/champ/:id', function(req, res){
+
+  lolapi.Static.getChampion(req.params.id, { champData : 'image' }, function(error, result){
+    if (error) {
+      console.log(error);
+    }
+    else {
+      result.image.full   = config.imagePaths.full   + result.image.full;
+      result.image.sprite = config.imagePaths.sprite + result.image.sprite;
+
+      res.send(result);
+    }
+  });
+
+});
+
+// get a row from mysql database connection and write the row to postgresql database
+app.get('/migrate', function(req, res) {
+  // do stuff
+
+  console.log('Hello!');
+
+  // get rows from mysql
+  getMysqlRows(function(){
+    res.send('done');
+  });
+
+  // insert them into psql
 });
 
 app.get('/cleaner', function (req, res) {
@@ -104,6 +221,24 @@ app.post('/match', function(req, res) {
 
 
 // helper functions used by endpoints
+
+function createUser(roomId, callback){
+
+  console.log('create user with joined room');
+  var nickname = generateNickname();
+
+  var query = "INSERT INTO users ( room_id, nickname ) VALUES ( " + roomId + ", '" + nickname + "' ) RETURNING *;";
+
+  var q = pgclient.query(query, function(err, result){
+    if (err){
+      console.log(err);
+    }
+
+    var user = { id : result.rows[0].id, nickname : result.rows[0].nickname };
+
+    callback( user );
+  });
+}
 
 // get row from mysql database
 function getMysqlRows(callback){
@@ -163,7 +298,7 @@ function updateCleaned(id){
 }
 
 // clean json to make valid
-function cleanJson(id, json){
+function cleanJson(json){
   var reg = /\{,|,,|:,|:\d+,\d+,|\[,/g;
 
   cleaned =    json.replace(/\{,/g, '{');
@@ -179,6 +314,44 @@ function cleanJson(id, json){
   cleaned = cleaned.replace(/:-?(\d+\.?\d+),(\d+)\}/g, ':$1$2}');
   cleaned = cleaned.replace(/\[,/g, '[');
   cleaned = cleaned.replace(/\,]/g, ']');
+  cleaned = cleaned.replace(/"(\w+),":/g, '"$1":');
+  cleaned = cleaned.replace(/",(\w+)":/g, '"$1":');
+  cleaned = cleaned.replace(/"(\w+),(\w+)":/g, '"$1$2":');
 
   return cleaned;
+}
+
+function getRandomInt(){
+  var min = 0;
+  var max = config.randomMax;
+  return Math.floor(Math.random() * (max - min)) + min;
+}
+
+function getRoomId(id, random){
+  var string = '' + id + random;
+  return parseInt(string, 10).toString(36);
+}
+
+function roomIdToParams(roomId){
+  var roomIdNum = parseInt(roomId, 36),
+      roomIdStr = roomIdNum.toString(),
+      random    = roomIdStr.substr(roomIdStr.length + 1 - config.randomDigits),
+      id        = roomIdStr.substr(0, (roomIdStr.length + 1 - config.randomDigits));
+
+  return { id : id, random : random };
+}
+
+// cool solution http://stackoverflow.com/questions/10073699/pad-a-number-with-leading-zeros-in-javascript
+function pad(n) {
+  var width = config.randomDigits;
+  z = 0;
+  n = n + '';
+  return n.length >= width ? n : new Array(width - n.length + 1).join(z) + n;
+}
+
+function generateNickname(){
+  var noun       = words.nouns[Math.floor(Math.random() * (words.nouns.length - 0))];
+  var adjective  = words.adjectives[Math.floor(Math.random() * (words.adjectives.length - 0))];
+
+  return adjective + " " + noun;
 }

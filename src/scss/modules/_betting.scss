@@ -1,0 +1,11 @@
+$betting-sprite-width: 60px;
+$betting-sprite-height: 60px;
+
+.bets {
+  margin: 0 auto;
+  
+  .champion-image img {
+    width: $betting-sprite-width;
+    height: $betting-sprite-height;
+  }
+}

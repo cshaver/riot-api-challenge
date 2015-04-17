@@ -16,12 +16,13 @@ Challenge.Collections = Challenge.Collections || {};
       },
 
       parse:  function(data, options){
+        // data = cleanJson(data);
+
         data.participants = new Challenge.Collections.Participants(data.participants);
         data.teams        = new Challenge.Collections.Teams(data.teams);
         data.timeline     = new Challenge.Models.Timeline(data.timeline);
-        console.log(data);
         return data;
-      }
+      },
 
     });
 

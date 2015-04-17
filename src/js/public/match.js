@@ -4,6 +4,7 @@ window.Challenge = {
     Models: {},
     Collections: {},
     Views: {},
+    Routers: {},
     init: function(){
 
     }
@@ -19,11 +20,11 @@ jQuery(document).ready(function () {
 
   console.log('ohai');
 
-  
+  //define our new instance of router
+  Challenge.Routers.router = new Challenge.Routers.Router();
 
-  Challenge.Views.appView = new Challenge.Views.AppView();
-
-
+  // use html5 History API
+  Backbone.history.start({pushState: true}); 
 
 });
 

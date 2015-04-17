@@ -35,6 +35,14 @@
 @import 'modules/_misc.scss';
 @import 'modules/_app.scss';
 
+
+//----------------------------------*\
+// Game Specific
+//----------------------------------*/
+
+@import 'modules/_minimap.scss';
+@import 'modules/_betting.scss';
+
 // Enhancement modules
 @import 'modules/_breakpoints.scss';
 @import 'modules/_print.scss';

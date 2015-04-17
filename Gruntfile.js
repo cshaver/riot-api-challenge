@@ -88,6 +88,23 @@ module.exports = function (grunt) {
       }
     },
 
+    handlebars: {
+      compile: {
+        options: {
+          processName: function(filePath) {
+            // Removes the "src/hbs/" and ".hbs" parts of key names.
+            var prefix = "src/templates/";
+            var suffix = ".hbs";
+            
+            return filePath.slice( prefix.length , filePath.lastIndexOf(suffix) );
+          }
+        },
+        files: {
+          "public/assets/js/template.js":"src/templates/**/*.hbs"
+        }
+      }
+    },
+
     /**
      * Concatenate JavaScript files
      * https://github.com/gruntjs/grunt-contrib-concat
@@ -134,6 +151,13 @@ module.exports = function (grunt) {
         files: {
           '<%= project.assets %>/js/*.js': '<%= project.js %>'
         }
+      },
+      handlebars: {
+        options: {
+          sourceMap: true
+        },
+        src: 'public/assets/js/template.js',
+        dest: 'public/assets/js/template.js'
       }
     },
 
@@ -272,6 +296,10 @@ module.exports = function (grunt) {
         files: '<%= project.src %>/scss/{,*/}*.{scss,sass}',
         tasks: ['sass:dev', 'cssmin:dev', 'autoprefixer:dev']
       },
+      handlebars: {
+        files: 'src/templates/**/*.hbs',
+        tasks: [ 'handlebars:compile' ]
+      },
       livereload: {
         options: {
           livereload: LIVERELOAD_PORT
@@ -295,6 +323,7 @@ module.exports = function (grunt) {
     // 'bower:dev',
     'autoprefixer:dev',
     'cssmin:dev',
+    'handlebars:compile',
     'jshint',
     'concat:dev',
     'connect:livereload',
@@ -314,6 +343,7 @@ module.exports = function (grunt) {
     // 'bower:dist',
     'autoprefixer:dist',
     'cssmin:dist',
+    'handlebars:compile',
     'clean:dist',
     'copy',
     'bower_concat',
