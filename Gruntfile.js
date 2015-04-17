@@ -20,7 +20,7 @@ module.exports = function (grunt) {
 
     project: {
       src: 'src',
-      app: 'public/app',
+      app: 'public',
       assets: '<%= project.app %>/assets',
       css: [
         '<%= project.src %>/scss/style.scss'
@@ -55,7 +55,7 @@ module.exports = function (grunt) {
       livereload: {
         options: {
           middleware: function (connect) {
-            return [lrSnippet, mountFolder(connect, 'public/app')];
+            return [lrSnippet, mountFolder(connect, 'public')];
           }
         }
       }
@@ -95,14 +95,26 @@ module.exports = function (grunt) {
      */
     concat: {
       dev: {
-        files: {
-          '<%= project.assets %>/js/scripts.min.js': '<%= project.js %>'
-        }
+        src: [ 'src/js/public/match.js', 'src/js/public/library/*.js'],
+        dest: 'public/assets/js/app.js'
       },
       options: {
         stripBanners: true,
+        sourceMap: true,
         nonull: true,
         banner: '<%= tag.banner %>'
+      }
+    },
+    
+    bower_concat: {
+      all: {
+        dest: 'public/assets/js/lib.js',
+        cssDest: 'public/assets/css/lib.css',
+        dependencies: {
+          'underscore': [ 'jquery' ],
+          'handlebars': [ 'jquery' , 'underscore' ],
+          'backbone': [ 'jquery' , 'underscore' , 'handlebars' ]
+        }
       }
     },
 
@@ -113,12 +125,25 @@ module.exports = function (grunt) {
      */
     uglify: {
       options: {
-        banner: '<%= tag.banner %>'
+        banner: '<%= tag.banner %>',
+        sourceMap: true
       },
       dist: {
+        src: '<%= concat.dev.dest %>',
+        dest: 'public/assets/js/*.js',
         files: {
-          '<%= project.assets %>/js/scripts.min.js': '<%= project.js %>'
+          '<%= project.assets %>/js/*.js': '<%= project.js %>'
         }
+      }
+    },
+
+    copy: {
+      files: {
+        cwd: 'src/js',             // set working folder / root to copy
+        src: 'public/*',               // copy all files and subfolders
+        dest: 'public/assets/js',  // destination folder
+        expand: true,               // required when using cwd
+        flatten: true
       }
     },
 
@@ -236,8 +261,12 @@ module.exports = function (grunt) {
      */
     watch: {
       concat: {
-        files: '<%= project.src %>/js/{,*/}*.js',
+        files: '<%= project.src %>/js/**/*.js',
         tasks: ['concat:dev', 'jshint']
+      },
+      copy: {
+        files: '<%= project.src %>/js/{,*/}*.js',
+        tasks: ['copy']
       },
       sass: {
         files: '<%= project.src %>/scss/{,*/}*.{scss,sass}',
@@ -269,7 +298,9 @@ module.exports = function (grunt) {
     'jshint',
     'concat:dev',
     'connect:livereload',
-    'open',
+    // 'open',
+    'copy',
+    'bower_concat',
     'watch'
   ]);
 
@@ -284,8 +315,11 @@ module.exports = function (grunt) {
     'autoprefixer:dist',
     'cssmin:dist',
     'clean:dist',
-    'jshint',
-    'uglify'
+    'copy',
+    'bower_concat',
+    'concat:dev',
+    'jshint'
+    // 'uglify'
   ]);
 
 };

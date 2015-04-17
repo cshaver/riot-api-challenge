@@ -46,6 +46,16 @@ body {
   list-style: none;
 }
 
+.main {
+  text-align: center;
+}
+
+textarea {
+  width: 800px;
+  height: 600px;
+  margin: 1em;
+}
+
 @font-face {
   font-family: 'Font-Name';
   src: url("../fonts/font-name.eot");
