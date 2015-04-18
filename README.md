@@ -3,7 +3,7 @@ Entry to the [Riot API Challenge](https://developer.riotgames.com/discussion/rio
 
 [View the Demo Here](https://riot-api-challenge.herokuapp.com/)
 
-This thing is *clearly* unfinished, but I've instructions and my thoughts below since it was still a lot of fun to make! I really enjoyed trying something new with the Riot API, especially since I got to use a lot of tools I don't normally play with on a regular basis.
+This thing is *clearly* unfinished, but I've included instructions and my thoughts below since it was still a lot of fun to make! I really enjoyed trying something new with the Riot API, especially since I got to use a lot of tools I don't normally play with on a regular basis.
 
 # Current Functionality
 Entry into the first page allows the host to create a room with a shareable link, and fetch a cached URF game. All users in the room should get the same game when the host fetches. The host can hit play to have the summoner icons animate around the map and keep track of the kills, deaths, and assists per champion.
