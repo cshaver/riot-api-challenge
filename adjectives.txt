@@ -1,22 +1,20 @@
-adjectives
-
-Doran's
+Doran’s
 Bilgewater
-Rabadon's
-Nashor's
+Rabadon’s
+Nashor’s
 Last
 Righteous
 Trinity
-Wooglet's
+Wooglet’s
 Talisman of
 Will of the
 Ruby
-Luden's
+Luden’s
 Infinity
 The
-Mejai's
-Archangel's
-Seraph's
+Mejai’s
+Archangel’s
+Seraph’s
 Greater
 Forbidden
 Boots of
@@ -39,3 +37,14 @@ Super Mega
 OP
 AFK
 Better Nerf
+Unstoppable
+Cosplaying
+Chat Restricted
+Diamond
+Bronze League
+Calculated
+Lagging
+IRL
+Bugged
+Hyped
+Dark, Secret

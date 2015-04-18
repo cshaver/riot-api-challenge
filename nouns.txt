@@ -31,9 +31,12 @@ Nexus
 Rito
 Jungler
 ADC
+Support
 Smurf
 Assist
 Kill
 Fountain
 CC
 Tibbers
+Donger
+GG

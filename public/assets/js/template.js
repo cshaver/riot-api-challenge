@@ -10,14 +10,26 @@ this["JST"]["betting-row"] = Handlebars.template({"compiler":[6,">= 2.0.0-beta.1
     + "\"/>\n  </td>\n  <td class=\"kills\">\n    0\n  </td>\n  <td class=\"deaths\">\n    0\n  </td>\n  <td class=\"assists\">\n    0\n  </td>\n</tr>";
 },"useData":true});
 
+this["JST"]["fresh-socket"] = Handlebars.template({"compiler":[6,">= 2.0.0-beta.1"],"main":function(depth0,helpers,partials,data) {
+    return "<button id=\"newRoom\">New Room</button>";
+},"useData":true});
+
 this["JST"]["main"] = Handlebars.template({"compiler":[6,">= 2.0.0-beta.1"],"main":function(depth0,helpers,partials,data) {
-    return "<button id=\"newRoom\">New Room</button>\n\n<div class=\"minimap\">\n  <ul class=\"sprite-list\"></ul>\n</div>\n\n<div class=\"table\"></div>";
+    return "";
+},"useData":true});
+
+this["JST"]["minimap"] = Handlebars.template({"compiler":[6,">= 2.0.0-beta.1"],"main":function(depth0,helpers,partials,data) {
+    return "<ul class=\"sprite-list\"></ul>\n";
+},"useData":true});
+
+this["JST"]["room-socket"] = Handlebars.template({"compiler":[6,">= 2.0.0-beta.1"],"main":function(depth0,helpers,partials,data) {
+    return "Users: <textarea disabled id=\"userList\" width=\"100\" height=\"200\"></textarea>\n<div class=\"share\"></div>";
 },"useData":true});
 
 this["JST"]["share"] = Handlebars.template({"compiler":[6,">= 2.0.0-beta.1"],"main":function(depth0,helpers,partials,data) {
     var helper;
 
-  return "<input type=\"text\" name=\"share\" value=\""
+  return "<label for=\"share\">Share:</label><input type=\"text\" name=\"share\" value=\""
     + this.escapeExpression(((helper = (helper = helpers.link || (depth0 != null ? depth0.link : depth0)) != null ? helper : helpers.helperMissing),(typeof helper === "function" ? helper.call(depth0,{"name":"link","hash":{},"data":data}) : helper)))
     + "\"/>";
 },"useData":true});

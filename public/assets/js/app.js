@@ -42,40 +42,58 @@ Challenge.Models      = Challenge.Models || {};
 Challenge.Collections = Challenge.Collections || {};
 Challenge.Views       = Challenge.Views || {};
 
+// begins other views
 Challenge.Views.AppView = Backbone.View.extend({
   
   el: "main",
   
   events: {
-    'click #newRoom' : 'newRoom',
+  },
+
+  templates: {
+    main : JST['main']
+  },
+
+  initialize: function (options) {
+    this.render()
+
+    Challenge.Views.socketView = new Challenge.Views.SocketView(options);
+    Challenge.Views.matchView = new Challenge.Views.MatchView(options);
+  },
+  
+  render: function () {
+    $(this.el).html(this.templates.main());
+  }
+
+});
+
+Challenge.Models      = Challenge.Models || {};
+Challenge.Collections = Challenge.Collections || {};
+Challenge.Views       = Challenge.Views || {};
+
+// rendering champs and animating match
+Challenge.Views.MatchView = Backbone.View.extend({
+  
+  el: ".minimap",
+  
+  events: {
     'click #replay'  : 'replayMatch',
   },
 
   templates: {
-    main       : JST['main'],
-    share      : JST['share'],
-    sprite     : JST['sprite'],
-    table      : JST['table'],
-    bettingRow : JST['betting-row']
+    minimap    : JST['minimap'],
+    sprite     : JST['sprite']
   },
 
-  room: null,
-  socket: null,
   frameTime: 100,
 
   initialize: function () {
-    this.render()
 
     this.match = new Challenge.Models.Match();
 
-    var self = this;
+  },
 
-    this.socket = io();
-
-    this.socket.on('users update', function(users){
-      self.renderUsers(users);
-    });
-
+  getMatch: function() {
     this.match.fetch({
       success: function(model, response){
         console.log(model);
@@ -83,10 +101,11 @@ Challenge.Views.AppView = Backbone.View.extend({
       }
     });
 
+    this.render()
   },
   
   render: function () {
-    $(this.el).html(this.templates.main());
+    $(this.el).html(this.templates.minimap());
   },
 
   fetchChampions: function(match){
@@ -126,11 +145,6 @@ Challenge.Views.AppView = Backbone.View.extend({
       }
       $teamTable.append(self.templates.bettingRow( $.extend({}, participant.attributes, participant.get('champion').attributes) ));
     });
-  },
-
-  renderUsers: function(users){
-    // lol not in el what is wrong with you
-    $('.users').html(users);
   },
 
   replayMatch: function(){
@@ -250,33 +264,11 @@ Challenge.Views.AppView = Backbone.View.extend({
 
     return { x : x, y : y };
 
-  },
-
-  renderSprite: function(id){
-
-  },
-
-  newRoom: function() {
-    var self = this;
-    
-    $.get( "/room", function( data ) {
-      self.room   = new Challenge.Models.Room(data.room);
-      self.user   = new Challenge.Models.User(data.user);
-
-      console.log('hi');
-      self.socket.emit('join', data);
-
-      self.showLink();
-    });
-  },
-
-  showLink: function(){
-    var url = window.location.origin + '/join/' + this.room.get('id');
-    $(this.el).append(this.templates.share({ link : url }));
   }
 
 });
 Challenge.Routers = Challenge.Routers || {};
+Challenge.Views       = Challenge.Views || {};
 
 Challenge.Routers.Router = Backbone.Router.extend ({
   routes: {
@@ -292,12 +284,105 @@ Challenge.Routers.Router = Backbone.Router.extend ({
   room: function (id) {
     var url = '/room/' + id;
     $.get( url, function( data ) {
+      Challenge.Views.appView = new Challenge.Views.AppView(data);
+    });
+  }
+
+});
+
+Challenge.Models      = Challenge.Models || {};
+Challenge.Collections = Challenge.Collections || {};
+Challenge.Views       = Challenge.Views || {};
+
+// new room, users, go button, betting
+Challenge.Views.SocketView = Backbone.View.extend({
+  
+  el: ".socket",
+  
+  events: {
+    'click #newRoom' : 'newRoom'
+  },
+
+  templates: {
+    roomSocket     : JST['room-socket'],
+    freshSocket    : JST['fresh-socket'],
+    share          : JST['share']
+  },
+
+  room: null,
+  user: null,
+  socket: null,
+
+  initialize: function (options) {
+    this.socket = io();
+
+    if (options){
+
+      this.room   = new Challenge.Models.Room(options.room);
+      this.user   = new Challenge.Models.User(options.user);
+      this.socket = io();
+
+      var self = this;
+      this.socket.on('users', function(data){
+        self.renderUsers(data);
+      });
+
+      this.socket.emit('join', options);
+
+      this.renderRoom();
+    }
+    else {
+      this.render();
+    }
+  },
+  
+  render: function () {
+    $(this.el).html(this.templates.freshSocket());
+  },
+
+  renderRoom: function(){
+    $(this.el).html(this.templates.roomSocket());
+  },
+
+  renderUsers: function(data){
+    console.log('render users');
+    // lol not in el what is wrong with you
+    var $list = $('#userList', this.el).text('');
+
+    for (var i = 0; i < data.users.length; i++){
+      var nick = data.users[i].nickname;
+
+      if (nick === this.user.get('nickname')){
+        nick = nick + " (you)";
+      }
+
+      $list.text( $list.text() + '\n' + nick );
+    }
+  },
+
+  newRoom: function() {
+    var self = this;
+    
+    $.get( "/room", function( data ) {
       self.room   = new Challenge.Models.Room(data.room);
       self.user   = new Challenge.Models.User(data.user);
-      self.socket = io();
+
+      console.log('new room');
+
+      self.socket.on('users', function(data){
+        self.renderUsers(data);
+      });
 
       self.socket.emit('join', data);
+
+      self.renderRoom();
+      self.showLink();
     });
+  },
+
+  showLink: function(){
+    var url = window.location.origin + '/join/' + this.room.get('id');
+    $('.share', this.el).html(this.templates.share({ link : url }));
   }
 
 });

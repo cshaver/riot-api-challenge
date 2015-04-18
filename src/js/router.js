@@ -13,8 +13,8 @@ app.use(express.static('public'));
 var config = {};
 
 var words = {
-  adjectives : ["Doran’s","Bilgewater","Rabadon’s","Nashor’s","Last","Righteous","Trinity","Wooglet’s","Talisman of","Will of the","Ruby","Luden’s","Infinity","The","Mejai’s","Archangel’s","Seraph’s","Greater","Forbidden","Boots of","Tear of the","Wicked","Fed","Siege","Super","Caster","Melee","Ranged","Outer","Inhibitor","Nexus","Excessive","Perma","Definitely Not","Enchanted Crystal","Super Mega","OP","AFK","Better Nerf"],
-  nouns      : ["Gromp","Krug","Scuttler","Sentinel","Raptor","Wolf","Brambleback","Dragon","Baron","Buff","Wraith","Vilemaw","Golem","Elixer","Ward","Poro","Boots","Shield","B. F. Sword","Smite","Heal","Ignite","Ghost","Teleport","Needlessly Large Rod","Soulstealer","Minion","Turret","Inhibitor","Nexus","Rito","Jungler","ADC","Smurf","Assist","Kill","Fountain","CC","Tibbers"]
+  adjectives : ["Doran’s","Bilgewater","Rabadon’s","Nashor’s","Last","Righteous","Trinity","Wooglet’s","Talisman of","Will of the","Ruby","Luden’s","Infinity","The","Mejai’s","Archangel’s","Seraph’s","Greater","Forbidden","Boots of","Tear of the","Wicked","Fed","Siege","Super","Caster","Melee","Ranged","Outer","Inhibitor","Nexus","Excessive","Perma","Definitely Not","Enchanted Crystal","Super Mega","OP","AFK","Better Nerf","Unstoppable","Cosplaying","Chat Restricted","Diamond","Bronze League","Calculated","Lagging","IRL","Bugged","Hyped","Dark, Secret"],
+  nouns      : ["Gromp","Krug","Scuttler","Sentinel","Raptor","Wolf","Brambleback","Dragon","Baron","Buff","Wraith","Vilemaw","Golem","Elixer","Ward","Poro","Boots","Shield","B. F. Sword","Smite","Heal","Ignite","Ghost","Teleport","Needlessly Large Rod","Soulstealer","Minion","Turret","Inhibitor","Nexus","Rito","Jungler","ADC","Support","Smurf","Assist","Kill","Fountain","CC","Tibbers","Donger","GG"]
 };
 
 var lolapi  = require('lolapi')(config.apiKey, config.region);
@@ -31,32 +31,39 @@ io.on('connection', function(socket){
   socket.user = { id : '', nickname : '' };
 
   socket.on('disconnect', function(){
-    console.log(socket.user.nickname + ' left rooms ' + socket.rooms);
-    console.log(socket.rooms);
+    console.log(socket.user.nickname + ' left ' + socket.joinedRooms.length + ' rooms');
+    updateRooms(socket.joinedRooms);
   });
 
   // join a room
   socket.on('join', function(data){
-    console.log(data);
     socket.user = data.user;
     socket.join(data.room.id);
+    socket.join('some room');
+    socket.joinedRooms = socket.joinedRooms || [];
+    socket.joinedRooms.push(data.room.id);
 
     console.log(socket.user.nickname + ' joined room ' + data.room.id);
-    // io.to(data.room.id).emit('users update', io.sockets.clients(data.room.id));
+
+    io.to(data.room.id).emit('users', { users : getUserList(data.room.id) } );
   });
 });
 
+function updateRooms(roomList){
+  for (var id in roomList) {
+    io.to(roomList[id]).emit('users', { users : getUserList(roomList[id]) } );
+  }
+}
 
-// DATABASE stuff
-//
-// set up MySQL
-var mysql      = require('mysql');
-var mysqlConnection = mysql.createConnection({
-  host     : 'localhost',
-  user     : 'root',
-  password : '',
-  database : 'riotpls'
-});
+function getUserList(roomName){
+  var namespace = '/';
+  var userList = [];
+  for (var socketId in io.nsps[namespace].adapter.rooms[roomName]) {
+    var s = io.sockets.connected[socketId];
+    userList.push(s.user);
+  }
+  return userList;
+}
 
 // set up PostgreSQL
 var pg = require('pg');
@@ -66,8 +73,6 @@ var connectionString = "postgres://" + config.postgres.user + ":" + config.postg
 
 var pgclient = new pg.Client(connectionString);
 pgclient.connect();
-
-mysqlConnection.connect();
 
 // endpoints
 
@@ -86,10 +91,10 @@ app.get('/room/:id', function(req, res){
       else {
         var id     = result.rows[0].id,
             random = result.rows[0].random,
-            room   = getRoomId(id, random);
+            roomId   = getRoomId(id, random);
 
         createUser(id, function(user){
-          res.send( { room : result.rows[0], user: user } );
+          res.send( { room : { id : roomId }, user: user } );
         });
       }
     });
@@ -189,46 +194,12 @@ app.get('/champ/:id', function(req, res){
 
 });
 
-// get a row from mysql database connection and write the row to postgresql database
-app.get('/migrate', function(req, res) {
-  // do stuff
-
-  console.log('Hello!');
-
-  // get rows from mysql
-  getMysqlRows(function(){
-    res.send('done');
-  });
-
-  // insert them into psql
-});
-
-app.get('/cleaner', function (req, res) {
-   
-  mysqlConnection.query('SELECT * FROM matches WHERE json IS NOT NULL AND cleaned = 1 LIMIT 1000;', function(err, rows, fields) {
-    if (err) throw err;
-
-    console.log('selected ' + rows.length + ' rows.');
-    for (var i = 0; i < rows.length; i++){
-      var json = cleanJson(rows[i].id, rows[i].json);
-      insert(rows[i].id, json);
-    }
-
-    res.send(true);
-  });
-});
-
-app.post('/match', function(req, res) {
-  console.log(req.body);
-});
-
-
 // helper functions used by endpoints
 
 function createUser(roomId, callback){
 
-  console.log('create user with joined room');
   var nickname = generateNickname();
+  console.log('create user ' + nickname + ' with joined room');
 
   var query = "INSERT INTO users ( room_id, nickname ) VALUES ( " + roomId + ", '" + nickname + "' ) RETURNING *;";
 
@@ -240,19 +211,6 @@ function createUser(roomId, callback){
     var user = { id : result.rows[0].id, nickname : result.rows[0].nickname };
 
     callback( user );
-  });
-}
-
-// get row from mysql database
-function getMysqlRows(callback){
-  console.log('get mysql');
-
-  mysqlConnection.query('SELECT * FROM matches WHERE cleaned = 2 LIMIT 1;', function(err, rows, fields) {
-    if (err) throw err;
-
-    console.log('MYSQL grabbing ' + rows.length + ' rows.');
-
-    insertPostgres(rows, callback);
   });
 }
 
@@ -283,20 +241,6 @@ function insertPostgres(array, callback){
 
   q.on('error', function(error){
     console.log(error);
-  });
-}
-
-// update mysql row to mark that it's been migrated
-function updateCleaned(id){
-  console.log('update cleaned');
-
-  var query = "UPDATE matches SET cleaned = 3 WHERE id = " + id + ";";
-
-  mysqlConnection.query(query, function (err, result) {
-    if (err) throw err;
-
-    console.log('MYSQL    changed ' + result.changedRows + ' rows');
-
   });
 }
 
