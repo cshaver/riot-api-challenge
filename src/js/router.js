@@ -17,13 +17,6 @@ var config = {
   "chunkTiming": 1000,
   "chunkSize": 35,
 
-  "postgres": {
-    "host"     : process.env.HOST,
-    "user"     : process.env.USER,
-    "password" : process.env.PASSWORD,
-    "database" : process.env.DATABASE,
-    "port"     : process.env.PORT
-  },
 
   "do_cache": true,
   "caching": {
@@ -103,9 +96,7 @@ function getUserList(roomName){
 
 // set up PostgreSQL
 var pg = require('pg');
-// "postgres://*USERNAME*:*PASSWORD*@*HOST*:*PORT/*DATABASE*"
-var connectionString = "postgres://" + config.postgres.user + ":" + config.postgres.password + "@" +
-                          config.postgres.host + ":" + config.postgres.port + "/" + config.postgres.database + "?ssl=true";
+var connectionString = process.env.DATABASE_URL + "?ssl=true";
 
 var pgclient = new pg.Client(connectionString);
 pgclient.connect();
