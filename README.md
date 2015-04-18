@@ -1,4 +1,4 @@
-# Riot API Challenge
+# Riot API Challenge - Quiet Room Match Simulator 2015
 Entry to the [Riot API Challenge](https://developer.riotgames.com/discussion/riot-games-api/show/bX8Z86bm)!
 
 [View the Demo Here](https://riot-api-challenge.herokuapp.com/)
