@@ -35,7 +35,6 @@
     "grunt-contrib-watch": "~0.4.4",
     "grunt-open": "~0.2.0",
     "http": "0.0.0",
-    "https": "^1.0.0",
     "matchdep": "~0.1.2",
     "mysql": "^2.6.1",
     "pg": "^4.3.0",
