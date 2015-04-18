@@ -14,12 +14,16 @@ this["JST"]["fresh-socket"] = Handlebars.template({"compiler":[6,">= 2.0.0-beta.
     return "<button id=\"newRoom\">New Room</button>";
 },"useData":true});
 
+this["JST"]["game-button"] = Handlebars.template({"compiler":[6,">= 2.0.0-beta.1"],"main":function(depth0,helpers,partials,data) {
+    return "<button id=\"fetchGame\">Fetch Game</button>";
+},"useData":true});
+
 this["JST"]["main"] = Handlebars.template({"compiler":[6,">= 2.0.0-beta.1"],"main":function(depth0,helpers,partials,data) {
     return "";
 },"useData":true});
 
 this["JST"]["minimap"] = Handlebars.template({"compiler":[6,">= 2.0.0-beta.1"],"main":function(depth0,helpers,partials,data) {
-    return "<ul class=\"sprite-list\"></ul>\n";
+    return "<div class=\"minimap\">\n  <ul class=\"sprite-list\"></ul>\n</div>";
 },"useData":true});
 
 this["JST"]["room-socket"] = Handlebars.template({"compiler":[6,">= 2.0.0-beta.1"],"main":function(depth0,helpers,partials,data) {

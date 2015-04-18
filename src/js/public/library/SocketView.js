@@ -9,7 +9,7 @@ Challenge.Views.SocketView = Backbone.View.extend({
   el: ".socket",
   
   events: {
-    'click #newRoom' : 'newRoom'
+    'click #newRoom'      : 'newRoom'
   },
 
   templates: {
@@ -21,6 +21,7 @@ Challenge.Views.SocketView = Backbone.View.extend({
   room: null,
   user: null,
   socket: null,
+  isHost: false,
 
   initialize: function (options) {
     this.socket = io();
@@ -36,11 +37,17 @@ Challenge.Views.SocketView = Backbone.View.extend({
         self.renderUsers(data);
       });
 
+      this.socket.on('fetch game', function(data){
+        console.log('socket fetch game');
+        self.fetchGame(data);
+      });
+
       this.socket.emit('join', options);
 
       this.renderRoom();
     }
     else {
+      this.isHost = true;
       this.render();
     }
   },
@@ -87,6 +94,18 @@ Challenge.Views.SocketView = Backbone.View.extend({
       self.renderRoom();
       self.showLink();
     });
+  },
+
+  announceFetchGame: function(matchId){
+    console.log('announceFetchgame');
+    this.socket.emit('fetch game', { room : self.room, matchId : matchId } );
+  },
+
+  fetchGame: function(data){
+    if (data.matchId !== Challenge.Views.matchView.match.get('matchId')){
+      console.log('fetch');
+    }
+    console.log(data.matchId);
   },
 
   showLink: function(){

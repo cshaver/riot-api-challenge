@@ -79,6 +79,14 @@ io.on('connection', function(socket){
       io.to(data.room.id).emit('users', { users : getUserList(data.room.id) } );
     }
   });
+
+  // join a room
+  socket.on('fetch game', function(data){
+    console.log('fetch game ' + data.matchId );
+    if (data.room){
+      io.to(data.room.id).emit('fetch game', { matchId : data.matchId } );
+    }
+  });
 });
 
 function updateRooms(roomList){
@@ -99,10 +107,7 @@ function getUserList(roomName){
 
 // set up PostgreSQL
 var pg = require('pg');
-var connectionString = process.env.DATABASE_URL + "?ssl=true";
-
-var pgclient = new pg.Client(connectionString);
-pgclient.connect();
+var dbUrl = process.env.DATABASE_URL + '?ssl=true';
 
 // endpoints
 
@@ -114,11 +119,18 @@ app.get('/room/:id', function(req, res){
     var query = "SELECT * FROM rooms WHERE id = " + roomParams.id + ";";
     console.log(query);
 
-    var q = pgclient.query(query, function(err, result){
-      if (err){
-        console.log(err);
-      }
-      else {
+    pg.connect(dbUrl, function(err, client, done){
+      var handleError = function(err){
+        if(!err) return false;
+
+        done(client);
+        res.end('An error occurred');
+        return true;
+      };
+
+      client.query(query, function(err, result){
+        if (handleError(err)) return;
+
         var id     = result.rows[0].id,
             random = result.rows[0].random,
             roomId   = getRoomId(id, random);
@@ -126,7 +138,7 @@ app.get('/room/:id', function(req, res){
         createUser(id, function(user){
           res.send( { room : { id : roomId }, user: user } );
         });
-      }
+      });
     });
   }
 
@@ -141,14 +153,25 @@ app.get('/room', function(req, res){
 
   var query = "INSERT INTO rooms ( random ) VALUES ( " + random + " ) RETURNING *;";
 
+  pg.connect(dbUrl, function(err, client, done){
+    var handleError = function(err){
+      if(!err) return false;
+      
+      done(client);
+      res.end('An error occurred');
+      return true;
+    };
 
-  var q = pgclient.query(query, function(err, result){
-    var id     = result.rows[0].id,
-        random = result.rows[0].random,
-        room   = getRoomId(id, random);
+    client.query(query, function(err, result){
+      if(handleError(err)) return;
 
-    createUser(id, function(user){
-      res.send( { room : { id : room }, user : user });
+      var id     = result.rows[0].id,
+          random = result.rows[0].random,
+          room   = getRoomId(id, random);
+
+      createUser(id, function(user){
+        res.send( { room : { id : room }, user : user });
+      });
     });
   });
 
@@ -159,35 +182,44 @@ app.get('/user/leave/:id', function(req, res){
 
   var query = "UPDATE users SET room_id = NULL WHERE id = " + req.params.id + " RETURNING *;";
 
-  var q = pgclient.query(query, function(err, result){
-    if (err){
-      console.log(err);
-    }
+  pg.connect(dbUrl, function(err, client, done){
+    var handleError = function(err){
+      if(!err) return false;
+      
+      done(client);
+      res.end('An error occurred');
+      return true;
+    };
 
-    res.send( result.rows );
+    client.query(query, function(err, result){
+      if(handleError(err)) return;
+
+      res.send( result.rows );
+    });
   });
 });
 
 // route endpoints
 app.get('/match', function(req, res) {
+  console.log('get random match');
   
   // shouldnt just do random since its kind slow but HEY its 10AM
-  var query = "SELECT * FROM matches WHERE json IS NOT NULL ORDER BY RANDOM() LIMIT 1;";
+  var query = "select * from matches offset random() * (select count(*) from matches) limit 1 ;";
 
-  var q = pgclient.query(query);
+  pg.connect(dbUrl, function(err, client, done){
+    var handleError = function(err){
+      if(!err) return false;
+      
+      done(client);
+      res.end('An error occurred');
+      return true;
+    };
+    
+    client.query(query, function(err, result){
+      if(handleError(err)) return;
 
-  var results = [];
-
-  q.on('row', function(row) {
-    results.push(row);
-  });
-
-  q.on('end', function() {
-    res.send(cleanJson(results[0].json));
-  });
-
-  q.on('error', function(error){
-    console.log(error);
+      res.send(cleanJson(result.rows[0].json));
+    });
   });
 });
 
@@ -233,44 +265,22 @@ function createUser(roomId, callback){
 
   var query = "INSERT INTO users ( room_id, nickname ) VALUES ( " + roomId + ", '" + nickname + "' ) RETURNING *;";
 
-  var q = pgclient.query(query, function(err, result){
-    if (err){
-      console.log(err);
-    }
+  pg.connect(dbUrl, function(err, client, done){
+    var handleError = function(err){
+      if(!err) return false;
+      
+      done(client);
+      res.end('An error occurred');
+      return true;
+    };
 
-    var user = { id : result.rows[0].id, nickname : result.rows[0].nickname };
+    client.query(query, function(err, result){
+      if(handleError(err)) return;
 
-    callback( user );
-  });
-}
+      var user = { id : result.rows[0].id, nickname : result.rows[0].nickname };
 
-// insert row into postgresql database
-function insertPostgres(array, callback){
-  console.log('insert postgres');
-  var query = "INSERT INTO matches (id, json, cleaned) VALUES ";
-
-  for (var i = 0; i < array.length; i++){
-    query = query + "( " + array[i].id + ", '" + array[i].json + "', " + array[i].cleaned + " ),";
-    updateCleaned(array[i].id);
-  }
-
-  query = query.slice(0, - 1) + ";";
-
-  var q = pgclient.query(query);
-
-  var results = [];
-
-  q.on('row', function(row) {
-    results.push(row);
-  });
-
-  q.on('end', function() {
-    console.log('POSTGRES');
-    callback();
-  });
-
-  q.on('error', function(error){
-    console.log(error);
+      callback( user );
+    });
   });
 }
 
