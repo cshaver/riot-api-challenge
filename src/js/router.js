@@ -1,7 +1,7 @@
 var express = require('express');
 var app     = express();
-var https   = require('https').Server(app);
-var io      = require('socket.io')(https);
+var http    = require('http').Server(app);
+var io      = require('socket.io')(http);
 
 var bodyParser = require('body-parser');
 
@@ -47,7 +47,7 @@ var lolapi  = require('lolapi')(config.apiKey, config.region);
 lolapi.setRateLimit(10, 500);
 
 // start server listening
-https.listen(3000, function(){
+http.listen(3000, function(){
   console.log('listening on *:3000');
 });
 
