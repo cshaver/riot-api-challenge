@@ -10,7 +10,39 @@ app.use( bodyParser.json() );
 // serve from public folder
 app.use(express.static('public'));
 
-var config = {};
+var config = {
+  "apiKey": process.env.API_KEY,
+  "region": "na",
+
+  "chunkTiming": 1000,
+  "chunkSize": 35,
+
+  "postgres": {
+    "host"     : process.env.HOST,
+    "user"     : process.env.USER,
+    "password" : process.env.PASSWORD,
+    "database" : process.env.DATABASE,
+    "port"     : process.env.PORT
+  },
+
+  "do_cache": true,
+  "caching": {
+    "allowedTimeBasic": 43200000,
+    "checkTimeBasic": 3600000,
+    "allowedTimeSQL": 900000,
+    "checkTimeSQL": 60000
+  },
+
+  "ignoreFatal": false,
+
+  "randomMax"    : 100000,
+  "randomDigits" : 6,
+
+  "imagePaths" : {
+    "sprite" : "http://ddragon.leagueoflegends.com/cdn/5.7.1/img/sprite/",
+    "full"   : "http://ddragon.leagueoflegends.com/cdn/5.7.1/img/champion/"
+  }
+};
 
 var words = {
   adjectives : ["Doran’s","Bilgewater","Rabadon’s","Nashor’s","Last","Righteous","Trinity","Wooglet’s","Talisman of","Will of the","Ruby","Luden’s","Infinity","The","Mejai’s","Archangel’s","Seraph’s","Greater","Forbidden","Boots of","Tear of the","Wicked","Fed","Siege","Super","Caster","Melee","Ranged","Outer","Inhibitor","Nexus","Excessive","Perma","Definitely Not","Enchanted Crystal","Super Mega","OP","AFK","Better Nerf","Unstoppable","Cosplaying","Chat Restricted","Diamond","Bronze League","Calculated","Lagging","IRL","Bugged","Hyped","Dark, Secret"],
