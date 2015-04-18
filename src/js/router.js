@@ -217,8 +217,8 @@ app.get('/match', function(req, res) {
   console.log('get random match');
   
   // shouldnt just do random since its kind slow but HEY its 10AM
-  var query = "select * from matches limit 1 ;";
-  // var query = "select * from matches offset random() * (select count(*) from matches) limit 1 ;";
+  // var query = "select * from matches limit 1 ;";
+  var query = "select * from matches offset random() * (select count(*) from matches) limit 1 ;";
 
   pg.connect(dbUrl, function(err, client, done){
     var handleError = function(err){
