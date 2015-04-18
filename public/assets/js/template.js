@@ -23,7 +23,11 @@ this["JST"]["main"] = Handlebars.template({"compiler":[6,">= 2.0.0-beta.1"],"mai
 },"useData":true});
 
 this["JST"]["minimap"] = Handlebars.template({"compiler":[6,">= 2.0.0-beta.1"],"main":function(depth0,helpers,partials,data) {
-    return "<div class=\"minimap\">\n  <ul class=\"sprite-list\"></ul>\n</div>";
+    return "<div class=\"minimap\">\n  <ul class=\"sprite-list\"></ul>\n</div>\n<div class=\"table\">\n</div>";
+},"useData":true});
+
+this["JST"]["play-button"] = Handlebars.template({"compiler":[6,">= 2.0.0-beta.1"],"main":function(depth0,helpers,partials,data) {
+    return "<button id=\"replay\">Go!</button>\n";
 },"useData":true});
 
 this["JST"]["room-socket"] = Handlebars.template({"compiler":[6,">= 2.0.0-beta.1"],"main":function(depth0,helpers,partials,data) {
@@ -53,5 +57,5 @@ this["JST"]["sprite"] = Handlebars.template({"compiler":[6,">= 2.0.0-beta.1"],"m
 },"useData":true});
 
 this["JST"]["table"] = Handlebars.template({"compiler":[6,">= 2.0.0-beta.1"],"main":function(depth0,helpers,partials,data) {
-    return "<button id=\"replay\">Go!</button>\n<table>\n  <tbody>\n    <tr>\n      <td>\n        <table class=\"bets team1\">\n          <thead>\n            <tr>\n              <td>Champ</td>\n              <td>Kills</td>\n              <td>Deaths</td>\n              <td>Assists</td>\n            </tr>\n          </thead>\n          <tbody>\n          </tbody>\n        </table>\n      </td>\n      <td>\n        <table class=\"bets team2\">\n          <thead>\n            <tr>\n              <td>Champ</td>\n              <td>Kills</td>\n              <td>Deaths</td>\n              <td>Assists</td>\n            </tr>\n          </thead>\n          <tbody>\n          </tbody>\n        </table>\n      </td>\n    </tr>\n  </tbody>\n</table>\n";
+    return "<table>\n  <tbody>\n    <tr>\n      <td>\n        <table class=\"bets team1\">\n          <thead>\n            <tr>\n              <td>Champ</td>\n              <td>Kills</td>\n              <td>Deaths</td>\n              <td>Assists</td>\n            </tr>\n          </thead>\n          <tbody>\n          </tbody>\n        </table>\n      </td>\n      <td>\n        <table class=\"bets team2\">\n          <thead>\n            <tr>\n              <td>Champ</td>\n              <td>Kills</td>\n              <td>Deaths</td>\n              <td>Assists</td>\n            </tr>\n          </thead>\n          <tbody>\n          </tbody>\n        </table>\n      </td>\n    </tr>\n  </tbody>\n</table>\n";
 },"useData":true});

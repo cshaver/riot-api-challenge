@@ -80,13 +80,26 @@ io.on('connection', function(socket){
     }
   });
 
-  // join a room
+  // fetch the same game
   socket.on('fetch game', function(data){
     console.log('fetch game ' + data.matchId );
+    console.log(data);
     if (data.room){
+      console.log(data.room);
       io.to(data.room.id).emit('fetch game', { matchId : data.matchId } );
     }
   });
+
+  // play the game
+  socket.on('play game', function(data){
+    console.log('play game ' + data.matchId );
+    console.log(data);
+    if (data.room){
+      console.log(data.room);
+      io.to(data.room.id).emit('play game', { matchId : data.matchId } );
+    }
+  });
+
 });
 
 function updateRooms(roomList){
@@ -204,7 +217,33 @@ app.get('/match', function(req, res) {
   console.log('get random match');
   
   // shouldnt just do random since its kind slow but HEY its 10AM
-  var query = "select * from matches offset random() * (select count(*) from matches) limit 1 ;";
+  var query = "select * from matches limit 1 ;";
+  // var query = "select * from matches offset random() * (select count(*) from matches) limit 1 ;";
+
+  pg.connect(dbUrl, function(err, client, done){
+    var handleError = function(err){
+      if(!err) return false;
+      
+      done(client);
+      res.end('An error occurred');
+      return true;
+    };
+    
+    client.query(query, function(err, result){
+      if(handleError(err)) return;
+
+      res.send(cleanJson(result.rows[0].json));
+    });
+  });
+});
+
+// route endpoints
+app.get('/match/:id', function(req, res) {
+  console.log('get specific match');
+  
+  // shouldnt just do random since its kind slow but HEY its 10AM
+  var query = "select * from matches WHERE id = " + req.params.id + " limit 1 ;";
+  // var query = "select * from matches offset random() * (select count(*) from matches) limit 1 ;";
 
   pg.connect(dbUrl, function(err, client, done){
     var handleError = function(err){

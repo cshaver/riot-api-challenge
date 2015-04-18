@@ -16,6 +16,7 @@ Challenge.Views.MatchView = Backbone.View.extend({
   templates: {
     minimap    : JST['minimap'],
     gameButton : JST['game-button'],
+    playButton : JST['play-button'],
     sprite     : JST['sprite'],
     table      : JST['table'],
     bettingRow : JST['betting-row'],
@@ -44,17 +45,17 @@ Challenge.Views.MatchView = Backbone.View.extend({
     var self = this;
 
     if (id){
-      console.log('fetch by id');
+      console.log('fetch by id ' + id);
+      this.match.set('id', id);
     }
-    else {
-      this.match.fetch({
-        success: function(model, response){
-          console.log(model);
-          Challenge.Views.socketView.announceFetchGame( model.get('matchId') );
-          self.fetchChampions(model);
-        }
-      });
-    }
+
+    this.match.fetch({
+      success: function(model, response){
+        console.log(model);
+        Challenge.Views.socketView.announceFetchGame( model.get('matchId') );
+        self.fetchChampions(model);
+      }
+    });
 
     this.render()
   },
@@ -100,7 +101,11 @@ Challenge.Views.MatchView = Backbone.View.extend({
     console.log('intro');
     var self = this;
 
-    $('.table', this.$el).append(this.templates.table());
+    $('.table', this.$el).html(this.templates.table());
+
+    if (this.isHost){
+      $('.table', this.$el).append(this.templates.playButton());
+    }
 
     var participants = this.match.get('participants');
 
@@ -114,7 +119,9 @@ Challenge.Views.MatchView = Backbone.View.extend({
   },
 
   replayMatch: function(){
-    console.log(this.match);
+    console.log('replay');
+
+    Challenge.Views.socketView.announcePlayGame( this.match.get('matchId') );
 
     var self = this;
     var frames = this.match.get('timeline').get('frames');

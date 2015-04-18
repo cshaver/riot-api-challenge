@@ -37,11 +37,6 @@ Challenge.Views.SocketView = Backbone.View.extend({
         self.renderUsers(data);
       });
 
-      this.socket.on('fetch game', function(data){
-        console.log('socket fetch game');
-        self.fetchGame(data);
-      });
-
       this.socket.emit('join', options);
 
       this.renderRoom();
@@ -57,7 +52,21 @@ Challenge.Views.SocketView = Backbone.View.extend({
   },
 
   renderRoom: function(){
+    var self = this;
+
     $(this.el).html(this.templates.roomSocket());
+
+    this.socket.on('fetch game', function(data){
+      console.log('socket fetch game');
+      self.fetchGame(data);
+    });
+
+    this.socket.on('play game', function(data){
+      console.log('socket play game');
+      if (data.matchId !== Challenge.Views.matchView.match.get('matchId')){
+        Challenge.Views.matchView.replayMatch();
+      }
+    });
   },
 
   renderUsers: function(data){
@@ -98,14 +107,19 @@ Challenge.Views.SocketView = Backbone.View.extend({
 
   announceFetchGame: function(matchId){
     console.log('announceFetchgame');
-    this.socket.emit('fetch game', { room : self.room, matchId : matchId } );
+    this.socket.emit('fetch game', { room : this.room, matchId : matchId } );
+  },
+
+  announcePlayGame: function(matchId){
+    console.log('announceplaygame');
+    this.socket.emit('play game', { room : this.room, matchId : matchId } );
   },
 
   fetchGame: function(data){
     if (data.matchId !== Challenge.Views.matchView.match.get('matchId')){
-      console.log('fetch');
+      console.log('fetch ' + data.matchId);
+      Challenge.Views.matchView.getMatch(null, data.matchId);
     }
-    console.log(data.matchId);
   },
 
   showLink: function(){
