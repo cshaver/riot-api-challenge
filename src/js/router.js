@@ -63,21 +63,25 @@ io.on('connection', function(socket){
   socket.user = { id : '', nickname : '' };
 
   socket.on('disconnect', function(){
+    socket.joinedRooms = socket.joinedRooms || [];
+    socket.user = socket.user || { nickname : '' };
     console.log(socket.user.nickname + ' left ' + socket.joinedRooms.length + ' rooms');
     updateRooms(socket.joinedRooms);
   });
 
   // join a room
   socket.on('join', function(data){
-    socket.user = data.user;
-    socket.join(data.room.id);
-    socket.join('some room');
-    socket.joinedRooms = socket.joinedRooms || [];
-    socket.joinedRooms.push(data.room.id);
+    if (data.user && data.room){
+      socket.user = data.user;
+      socket.join(data.room.id);
+      socket.join('some room');
+      socket.joinedRooms = socket.joinedRooms || [];
+      socket.joinedRooms.push(data.room.id);
 
-    console.log(socket.user.nickname + ' joined room ' + data.room.id);
+      console.log(socket.user.nickname + ' joined room ' + data.room.id);
 
-    io.to(data.room.id).emit('users', { users : getUserList(data.room.id) } );
+      io.to(data.room.id).emit('users', { users : getUserList(data.room.id) } );
+    }
   });
 });
 
