@@ -3,6 +3,9 @@ var app     = express();
 var http    = require('http').Server(app);
 var io      = require('socket.io')(http);
 
+var server_port = process.env.YOUR_PORT || process.env.PORT || 80;
+var server_host = process.env.YOUR_HOST || '0.0.0.0';
+
 var bodyParser = require('body-parser');
 
 app.use( bodyParser.json() );
@@ -47,8 +50,8 @@ var lolapi  = require('lolapi')(config.apiKey, config.region);
 lolapi.setRateLimit(10, 500);
 
 // start server listening
-http.listen(3000, function(){
-  console.log('listening on *:3000');
+http.listen(server_port, function(){
+  console.log('listening on *:' + server_port);
 });
 
 // set up socket.io
