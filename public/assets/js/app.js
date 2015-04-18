@@ -316,7 +316,7 @@ Challenge.Views.SocketView = Backbone.View.extend({
   initialize: function (options) {
     this.socket = io();
 
-    if (options){
+    if (options.room && options.user){
 
       this.room   = new Challenge.Models.Room(options.room);
       this.user   = new Challenge.Models.User(options.user);
